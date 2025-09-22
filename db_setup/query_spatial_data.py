@@ -120,8 +120,8 @@ def get_combined_data(spatial_id, zoom_level):
     result = {
         "spatial_id": spatial_id,
         "zoom_level": zoom_level,
-        # Always prioritize attributes from the second database
-        "attributes": attributes if attributes else (postgis_data.get("attributes") if postgis_data else None)
+        # Only use attributes from the second database, return null if not found
+        "attributes": attributes
     }
     
     # Handle data from the remote database
