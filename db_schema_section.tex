@@ -1,0 +1,41 @@
+\subsubsection{External Database for MR Authoring Attributes}
+
+The MR Authoring system employs a dual-database approach that separates spatial geometry data from application-specific attributes. This design pattern allows for flexible extension of the system while maintaining the integrity of the core spatial data.
+
+The system consists of two primary databases: the PostGIS Database that stores spatial geometries, tiles, and core spatial metadata; and the Spatial Attributes Database that stores application-specific attributes linked to spatial entities.
+
+The \texttt{spatial\_attributes\_db} contains a primary table structured as follows:
+
+\begin{verbatim}
+CREATE TABLE spatial_attributes (
+    id SERIAL PRIMARY KEY,
+    spatial_id VARCHAR(255) NOT NULL,
+    zoom_level INTEGER NOT NULL,
+    attributes JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(spatial_id, zoom_level)
+);
+\end{verbatim}
+
+The schema design incorporates several key features: Flexible Attribute Storage with the JSONB column type allowing for schema-less storage of varied attribute data without requiring schema migrations; Spatial Indexing with the composite index on \texttt{(spatial\_id, zoom\_level)} enabling efficient queries; Temporal Tracking with creation and modification timestamps supporting versioning; and Multi-Resolution Support with the \texttt{zoom\_level} field enabling different attribute sets at different spatial resolutions.
+
+The integration between the PostGIS database and the Spatial Attributes database is facilitated through a service layer that performs join operations across databases using \texttt{spatial\_id} and \texttt{zoom\_level} as linking keys, provides unified query interfaces, and maintains consistency through transaction management. This approach allows for independent scaling of storage, specialized optimization for different data access patterns, and separation of concerns between core spatial functionality and application-specific features.
+
+In the context of MR Authoring, this database schema supports workflows such as annotating spatial locations with interactive elements, storing user-specific preferences for spatial visualization, recording interaction history with spatial entities, and managing access permissions to spatial content.
+
+Example annotations that can be stored in the attributes JSONB field include:
+\begin{verbatim}
+{
+  "annotation_type": "information_marker",
+  "title": "Historical Building",
+  "description": "Built in 1923, this structure...",
+  "media_urls": ["https://example.com/image1.jpg"],
+  "interaction": {
+    "type": "popup",
+    "trigger_distance": 5
+  }
+}
+\end{verbatim}
+
+This flexible schema allows the MR Authoring system to evolve with new annotation types and interaction models without requiring database restructuring.
